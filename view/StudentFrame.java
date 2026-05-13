@@ -3,20 +3,22 @@ package view;
 import controllers.AuthController;
 import controllers.RequestController;
 import models.*;
+import store.DataStore;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.Map;
 import java.util.UUID;
 
-// Student dashboard: submit requests and view own request history
+// Student dashboard: submit requests, view active requests, view completed requests
 public class StudentFrame extends JFrame {
 
     private static final Color MAROON = new Color(128, 0, 0);
     private static final Color GOLD   = new Color(255, 215, 0);
 
     private final Student student;
-    private DefaultTableModel tableModel;
+    private DefaultTableModel activeModel;
+    private DefaultTableModel completedModel;
 
     public StudentFrame(Student student) {
         this.student = student;
@@ -39,25 +41,38 @@ public class StudentFrame extends JFrame {
         top.add(welcome, BorderLayout.WEST);
         top.add(logoutBtn, BorderLayout.EAST);
 
-        // request table
+        // tabbed pane
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.setBackground(MAROON);
+        tabs.setForeground(GOLD);
+        tabs.addTab("My Requests",  buildActiveTab());
+        tabs.addTab("Completed",    buildCompletedTab());
+
+        setLayout(new BorderLayout(5, 5));
+        add(top,  BorderLayout.NORTH);
+        add(tabs, BorderLayout.CENTER);
+
+        refreshActive();
+        refreshCompleted();
+    }
+
+    // active requests tab: submit form + table of non-completed requests
+    private JPanel buildActiveTab() {
+        JPanel p = new JPanel(new BorderLayout(5, 5));
+        p.setBackground(MAROON);
+
         String[] cols = {"Document Type", "Status", "Reason", "Message", "Pick-Up", "Submitted"};
-        tableModel = new DefaultTableModel(cols, 0) {
-            @Override
-            public boolean isCellEditable(int r, int c) { return false; }
+        activeModel = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        JTable table = new JTable(tableModel);
-        table.setBackground(Color.WHITE);
-        table.setForeground(Color.BLACK);
-        table.getTableHeader().setBackground(GOLD);
-        table.getTableHeader().setForeground(MAROON);
-        JScrollPane scroll = new JScrollPane(table);
+        JTable table = new JTable(activeModel);
+        styleTable(table);
+        p.add(new JScrollPane(table), BorderLayout.CENTER);
 
         // submit form
-        // FlowLayout lines up components left-to-right and wraps when the row is full
         JPanel form = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
         form.setBackground(MAROON);
 
-        // document type dropdown — "Other" is the last option
         String[] docTypes = {
             "Transcript of Records",
             "Certificate of Enrollment",
@@ -67,24 +82,16 @@ public class StudentFrame extends JFrame {
         };
         JComboBox<String> docBox = new JComboBox<>(docTypes);
 
-        // the "Other" label and text field start hidden
-        // setVisible(false) removes them from the layout visually but they still exist in memory
-        JLabel otherLabel = label("Document Name:");
+        // "Other" label and field — hidden until "Other" is selected
+        JLabel    otherLabel = label("Document Name:");
         JTextField otherField = new JTextField(15);
         otherLabel.setVisible(false);
         otherField.setVisible(false);
 
-        // ActionListener fires every time the user picks a different item in the dropdown
         docBox.addActionListener(e -> {
-            // getSelectedItem() returns the currently chosen string
             boolean isOther = "Other".equals(docBox.getSelectedItem());
-
-            // show or hide the extra field depending on whether "Other" is selected
             otherLabel.setVisible(isOther);
             otherField.setVisible(isOther);
-
-            // revalidate() tells the layout manager to recalculate positions
-            // repaint() tells Swing to redraw the panel — both are needed after visibility changes
             form.revalidate();
             form.repaint();
         });
@@ -93,12 +100,9 @@ public class StudentFrame extends JFrame {
         JButton submitBtn = new JButton("Submit Request");
         styleButton(submitBtn);
 
-        form.add(label("Document:"));
-        form.add(docBox);
-        form.add(otherLabel);   // hidden until "Other" is selected
-        form.add(otherField);   // hidden until "Other" is selected
-        form.add(label("Reason:"));
-        form.add(reasonField);
+        form.add(label("Document:")); form.add(docBox);
+        form.add(otherLabel);         form.add(otherField);
+        form.add(label("Reason:"));   form.add(reasonField);
         form.add(submitBtn);
 
         submitBtn.addActionListener(e -> {
@@ -107,51 +111,72 @@ public class StudentFrame extends JFrame {
                 JOptionPane.showMessageDialog(this, "Please enter a reason.");
                 return;
             }
-
-            // decide the final document type name
             String selected = (String) docBox.getSelectedItem();
             String docType;
             if ("Other".equals(selected)) {
-                // use whatever the user typed in the custom field
                 docType = otherField.getText().trim();
                 if (docType.isEmpty()) {
-                    // don't allow submitting "Other" with no name
                     JOptionPane.showMessageDialog(this, "Please enter the document name.");
                     return;
                 }
             } else {
-                // use the dropdown selection directly
                 docType = selected;
             }
-
             RequestController.submit(student, docType, reason);
             reasonField.setText("");
             otherField.setText("");
-
-            // reset dropdown back to first item after submit
             docBox.setSelectedIndex(0);
-
-            refreshTable();
+            refreshActive();
         });
 
-        setLayout(new BorderLayout(5, 5));
-        add(top, BorderLayout.NORTH);
-        add(scroll, BorderLayout.CENTER);
-        add(form, BorderLayout.SOUTH);
-
-        refreshTable();
+        p.add(form, BorderLayout.SOUTH);
+        return p;
     }
 
-    private void refreshTable() {
-        tableModel.setRowCount(0);
+    // completed tab: read-only view of this student's completed requests from the archive
+    private JPanel buildCompletedTab() {
+        JPanel p = new JPanel(new BorderLayout());
+        p.setBackground(MAROON);
+
+        String[] cols = {"Document Type", "Reason", "Message", "Pick-Up", "Completed At", "Submitted"};
+        completedModel = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        JTable table = new JTable(completedModel);
+        styleTable(table);
+        p.add(new JScrollPane(table), BorderLayout.CENTER);
+        return p;
+    }
+
+    // fills the active table with this student's non-completed requests
+    private void refreshActive() {
+        activeModel.setRowCount(0);
         for (Map.Entry<UUID, Request> entry : RequestController.getFor(student).entrySet()) {
             Request r = entry.getValue();
-            tableModel.addRow(new Object[]{
+            if ("Completed".equals(r.getStatus())) continue; // completed ones go to the other tab
+            activeModel.addRow(new Object[]{
                 r.getDocumentType(),
                 r.getStatus(),
                 r.getReason(),
                 r.getMessage()        != null ? r.getMessage()                   : "",
                 r.getPickUpDateTime() != null ? r.getPickUpDateTime().toString() : "",
+                r.getCreatedAt().toString()
+            });
+        }
+    }
+
+    // fills the completed table from DataStore.completed filtered to this student
+    private void refreshCompleted() {
+        completedModel.setRowCount(0);
+        for (Request r : DataStore.completed.values()) {
+            // only show requests that belong to this student
+            if (!r.getStudentId().equals(student.getId())) continue;
+            completedModel.addRow(new Object[]{
+                r.getDocumentType(),
+                r.getReason(),
+                r.getMessage()        != null ? r.getMessage()                   : "",
+                r.getPickUpDateTime() != null ? r.getPickUpDateTime().toString() : "",
+                r.getCompletedAt()    != null ? r.getCompletedAt().toString()    : "",
                 r.getCreatedAt().toString()
             });
         }
@@ -164,14 +189,17 @@ public class StudentFrame extends JFrame {
     }
 
     private JLabel label(String text) {
-        JLabel l = new JLabel(text);
-        l.setForeground(GOLD);
-        return l;
+        JLabel l = new JLabel(text); l.setForeground(GOLD); return l;
     }
 
     private void styleButton(JButton btn) {
-        btn.setBackground(GOLD);
-        btn.setForeground(MAROON);
-        btn.setFocusPainted(false);
+        btn.setBackground(GOLD); btn.setForeground(MAROON); btn.setFocusPainted(false);
+    }
+
+    private void styleTable(JTable table) {
+        table.setBackground(Color.WHITE);
+        table.setForeground(Color.BLACK);
+        table.getTableHeader().setBackground(GOLD);
+        table.getTableHeader().setForeground(MAROON);
     }
 }

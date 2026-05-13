@@ -76,8 +76,8 @@ public class StaffFrame extends JFrame {
         JTabbedPane tabs = new JTabbedPane();
         tabs.setBackground(MAROON);
         tabs.setForeground(GOLD);
-        tabs.addTab("Active Requests",    buildActiveTab());
-        tabs.addTab("Completed (24h)",    buildCompletedTab());
+        tabs.addTab("Active Requests", buildActiveTab());
+        tabs.addTab("Completed",       buildCompletedTab());
 
         setLayout(new BorderLayout(5, 5));
         add(top,  BorderLayout.NORTH);
