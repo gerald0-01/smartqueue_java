@@ -13,6 +13,7 @@ public class Request {
     private String message;
     private LocalDateTime       pickUp;
     private final LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime       completedAt; // set when status is changed to "Completed"
 
     public Request(UUID studentId, String documentType,
                    String status, String reason) {
@@ -31,9 +32,14 @@ public class Request {
     public String        getMessage()        { return message; }
     public LocalDateTime getPickUpDateTime() { return pickUp; }
     public LocalDateTime getCreatedAt()      { return createdAt; }
+    public LocalDateTime getCompletedAt()    { return completedAt; }
 
     // setters - only staff should be calling these
-    public void setStatus(String status)            { this.status  = status; }
+    public void setStatus(String status) {
+        this.status = status;
+        // record the exact moment it was marked Completed
+        if ("Completed".equals(status)) completedAt = LocalDateTime.now();
+    }
     public void setMessage(String message)          { this.message = message; }
     public void setPickUpDateTime(LocalDateTime dt) { this.pickUp  = dt; }
 }

@@ -21,7 +21,7 @@ public class AdminFrame extends JFrame {
     public AdminFrame(Admin admin) {
         this.admin = admin;
         setTitle("SmartQueue - Admin: " + admin.getName());
-        setSize(900, 550);
+        setSize(1280, 720);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         getContentPane().setBackground(MAROON);
