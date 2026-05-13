@@ -12,11 +12,11 @@ public class RegisterDialog extends JDialog {
 
     // the seven colleges offered as choices — stored as a constant array so it's easy to update
     private static final String[] COLLEGES = {
-        "College of Computer Sciences",
+        "College of Computer Studies",
         "College of Engineering",
         "College of Science and Mathematics",
         "College of Arts and Social Sciences",
-        "College of Economics, Business and Administration",
+        "College of Economics, Business and Accountancy",
         "College of Health Sciences",
         "College of Education"
     };
