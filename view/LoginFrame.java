@@ -1,9 +1,9 @@
 package view;
 
 import controllers.AuthController;
-import models.*;
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
+import models.*;
 
 // Login screen with maroon and gold theme
 public class LoginFrame extends JFrame {
@@ -11,8 +11,8 @@ public class LoginFrame extends JFrame {
     private static final Color MAROON = new Color(128, 0, 0);
     private static final Color GOLD   = new Color(255, 215, 0);
 
-    private JTextField idField;
-    private JPasswordField passField;
+    private final JTextField idField;
+    private final JPasswordField passField;
 
     public LoginFrame() {
         setTitle("SmartQueue - Login");
@@ -82,12 +82,12 @@ public class LoginFrame extends JFrame {
             return;
         }
         dispose();
-        if (u instanceof Admin) {
-            new AdminFrame((Admin) u).setVisible(true);
-        } else if (u instanceof Staff) {
-            new StaffFrame((Staff) u).setVisible(true);
-        } else if (u instanceof Student) {
-            new StudentFrame((Student) u).setVisible(true);
+        if (u instanceof Admin admin) {
+            new AdminFrame(admin).setVisible(true);
+        } else if (u instanceof Staff staff) {
+            new StaffFrame(staff).setVisible(true);
+        } else if (u instanceof Student student) {
+            new StudentFrame(student).setVisible(true);
         }
     }
 

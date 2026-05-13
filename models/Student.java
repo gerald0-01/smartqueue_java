@@ -37,6 +37,7 @@ public class Student extends User implements StudentMethods {
     }
 
     // only returns requests belonging to this student
+    @Override
     public HashMap<UUID, Request> getRequests(HashMap<UUID, Request> requests) {
         HashMap<UUID, Request> mine = new HashMap<>();
         for (Request r : requests.values()) {

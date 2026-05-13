@@ -2,12 +2,12 @@ package view;
 
 import controllers.AuthController;
 import controllers.RequestController;
-import models.*;
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.Map;
 import java.util.UUID;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import models.*;
 
 // Student dashboard: submit requests and view own request history
 public class StudentFrame extends JFrame {
@@ -42,6 +42,7 @@ public class StudentFrame extends JFrame {
         // request table
         String[] cols = {"Document Type", "Status", "Reason", "Message", "Pick-Up", "Submitted"};
         tableModel = new DefaultTableModel(cols, 0) {
+            @Override
             public boolean isCellEditable(int r, int c) { return false; }
         };
         JTable table = new JTable(tableModel);

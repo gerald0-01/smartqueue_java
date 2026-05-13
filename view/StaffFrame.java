@@ -2,15 +2,15 @@ package view;
 
 import controllers.AuthController;
 import controllers.RequestController;
-import models.*;
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import models.*;
 
 // Staff dashboard: view all requests and update their status
 public class StaffFrame extends JFrame {
@@ -46,6 +46,7 @@ public class StaffFrame extends JFrame {
         // request table
         String[] cols = {"#", "Document Type", "Status", "Reason", "Student ID", "Submitted"};
         tableModel = new DefaultTableModel(cols, 0) {
+            @Override
             public boolean isCellEditable(int r, int c) { return false; }
         };
         JTable table = new JTable(tableModel);

@@ -2,11 +2,11 @@ package view;
 
 import controllers.AdminController;
 import controllers.AuthController;
-import models.*;
-import store.DataStore;
+import java.awt.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import models.*;
+import store.DataStore;
 
 // Admin dashboard: manage users and view activity log
 public class AdminFrame extends JFrame {
@@ -61,6 +61,7 @@ public class AdminFrame extends JFrame {
         // user table
         String[] cols = {"ID Number", "Name", "Role", "Email"};
         userModel = new DefaultTableModel(cols, 0) {
+            @Override
             public boolean isCellEditable(int r, int c) { return false; }
         };
         JTable table = new JTable(userModel);
@@ -138,6 +139,7 @@ public class AdminFrame extends JFrame {
         p.setBackground(MAROON);
         String[] cols = {"Timestamp", "Actor", "Role", "Action", "Detail"};
         logModel = new DefaultTableModel(cols, 0) {
+            @Override
             public boolean isCellEditable(int r, int c) { return false; }
         };
         JTable table = new JTable(logModel);
